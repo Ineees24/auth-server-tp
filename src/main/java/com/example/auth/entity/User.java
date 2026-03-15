@@ -20,9 +20,8 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(name = "password_clear", nullable = false)
+    @Column(name = "password_hash", nullable = false)
     private String password;
-
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

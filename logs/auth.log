@@ -27,3 +27,7 @@
 2026-03-15T22:29:56.133+04:00  WARN 72468 --- [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
 2026-03-15T22:29:56.876+04:00  INFO 72468 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
 2026-03-15T22:29:56.890+04:00  INFO 72468 --- [main] com.example.auth.AuthApplication         : Started AuthApplication in 13.269 seconds (process running for 15.126)
+2026-03-15T22:31:31.227+04:00  INFO 72468 --- [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-03-15T22:31:31.232+04:00  INFO 72468 --- [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-03-15T22:31:31.253+04:00  INFO 72468 --- [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 19 ms
+2026-03-15T22:31:32.077+04:00  INFO 72468 --- [http-nio-8080-exec-1] com.example.auth.service.AuthService     : Connexion reussie pour : toto@example.com
