@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.example.authclient.controller.LoginController"
+      prefWidth="420" prefHeight="520"
+      spacing="0"
+      styleClass="root-container"
+      stylesheets="@style.css">
+
+    <!-- En-tête -->
+    <VBox styleClass="header" spacing="6">
+        <padding><Insets top="32" right="40" bottom="24" left="40"/></padding>
+        <Label text="🔐 Auth Server" styleClass="app-title"/>
+        <Label text="TP1 — Authentification Dangereuse" styleClass="app-subtitle"/>
+    </VBox>
+
+    <!-- Formulaire -->
+    <VBox styleClass="form-container" spacing="16" VBox.vgrow="ALWAYS">
+        <padding><Insets top="32" right="40" bottom="32" left="40"/></padding>
+
+        <Label text="Connexion" styleClass="section-title"/>
+
+        <!-- Email -->
+        <VBox spacing="6">
+            <Label text="Adresse email" styleClass="field-label"/>
+            <TextField fx:id="emailField"
+                       promptText="votre@email.com"
+                       styleClass="input-field"/>
+        </VBox>
+
+        <!-- Mot de passe -->
+        <VBox spacing="6">
+            <Label text="Mot de passe" styleClass="field-label"/>
+            <PasswordField fx:id="passwordField"
+                           promptText="Mot de passe..."
+                           styleClass="input-field"/>
+        </VBox>
+
+        <!-- Message erreur/succès -->
+        <Label fx:id="messageLabel" styleClass="msg-label" wrapText="true"/>
+
+        <!-- Bouton + loader -->
+        <HBox spacing="12" alignment="CENTER_LEFT">
+            <Button fx:id="loginButton"
+                    text="Se connecter"
+                    onAction="#onLoginClicked"
+                    styleClass="btn-primary"
+                    maxWidth="Infinity"
+                    HBox.hgrow="ALWAYS"/>
+            <ProgressIndicator fx:id="loadingIndicator" prefWidth="24" prefHeight="24"/>
+        </HBox>
+
+        <!-- Lien vers inscription -->
+        <HBox alignment="CENTER" spacing="6">
+            <Label text="Pas encore de compte ?" styleClass="link-label"/>
+            <Hyperlink text="S'inscrire" onAction="#onGoToRegister" styleClass="link"/>
+        </HBox>
+
+    </VBox>
+</VBox>

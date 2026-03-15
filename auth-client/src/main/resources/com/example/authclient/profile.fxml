@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.example.authclient.controller.ProfileController"
+      prefWidth="420" prefHeight="500"
+      spacing="0"
+      styleClass="root-container"
+      stylesheets="@style.css">
+
+    <!-- En-tête -->
+    <VBox styleClass="header" spacing="6">
+        <padding><Insets top="32" right="40" bottom="24" left="40"/></padding>
+        <Label text="🔐 Auth Server" styleClass="app-title"/>
+        <Label text="TP1 — Authentification Dangereuse" styleClass="app-subtitle"/>
+    </VBox>
+
+    <!-- Contenu -->
+    <VBox styleClass="form-container" spacing="20" VBox.vgrow="ALWAYS">
+        <padding><Insets top="32" right="40" bottom="32" left="40"/></padding>
+
+        <Label fx:id="welcomeLabel" styleClass="section-title" wrapText="true"/>
+
+        <!-- Carte infos -->
+        <VBox styleClass="info-card" spacing="12">
+            <padding><Insets top="16" right="20" bottom="16" left="20"/></padding>
+
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <Label text="📧 Email :" styleClass="info-key"/>
+                <Label fx:id="emailLabel" text="—" styleClass="info-value"/>
+            </HBox>
+
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <Label text="🔑 Token :" styleClass="info-key"/>
+                <Label fx:id="tokenLabel" text="—" styleClass="info-value-mono"/>
+            </HBox>
+        </VBox>
+
+        <!-- Message -->
+        <Label fx:id="messageLabel" styleClass="msg-label" wrapText="true"/>
+
+        <!-- Boutons -->
+        <HBox spacing="12" alignment="CENTER_LEFT">
+            <Button fx:id="refreshButton"
+                    text="↻ Actualiser"
+                    onAction="#onRefreshClicked"
+                    styleClass="btn-primary"/>
+            <ProgressIndicator fx:id="loadingIndicator" prefWidth="24" prefHeight="24"/>
+        </HBox>
+
+        <Button text="Se déconnecter"
+                onAction="#onLogoutClicked"
+                styleClass="btn-danger"
+                maxWidth="Infinity"/>
+
+    </VBox>
+</VBox>

@@ -1,0 +1,183 @@
+/* ── Fond global ─────────────────────────────────────────────────── */
+.root-container {
+    -fx-background-color: #12121A;
+}
+
+/* ── En-tête ─────────────────────────────────────────────────────── */
+.header {
+    -fx-background-color: #1C1C26;
+    -fx-border-color: #373750;
+    -fx-border-width: 0 0 1 0;
+}
+
+.app-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Monospaced";
+    -fx-text-fill: #F8F8FF;
+}
+
+.app-subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: #FBBF24;
+}
+
+/* ── Formulaire ──────────────────────────────────────────────────── */
+.form-container {
+    -fx-background-color: #12121A;
+}
+
+.section-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #F8F8FF;
+}
+
+.field-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #9494AC;
+}
+
+/* ── Champs de saisie ────────────────────────────────────────────── */
+.input-field {
+    -fx-background-color: #26263A;
+    -fx-text-fill: #F8F8FF;
+    -fx-prompt-text-fill: #5A5A7A;
+    -fx-border-color: #373750;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 10 14 10 14;
+    -fx-font-size: 14px;
+    -fx-font-family: "Monospaced";
+}
+
+.input-field:focused {
+    -fx-border-color: #6366F1;
+    -fx-effect: dropshadow(gaussian, rgba(99,102,241,0.3), 8, 0, 0, 0);
+}
+
+/* ── Boutons ─────────────────────────────────────────────────────── */
+.btn-primary {
+    -fx-background-color: #6366F1;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 12 24 12 24;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.btn-primary:hover {
+    -fx-background-color: #4F52DD;
+}
+
+.btn-primary:disabled {
+    -fx-background-color: #3A3A5C;
+    -fx-text-fill: #6A6A8A;
+}
+
+.btn-success {
+    -fx-background-color: #10B981;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 12 24 12 24;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.btn-success:hover {
+    -fx-background-color: #059669;
+}
+
+.btn-danger {
+    -fx-background-color: #EF4444;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 12 24 12 24;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.btn-danger:hover {
+    -fx-background-color: #DC2626;
+}
+
+/* ── Messages de retour ──────────────────────────────────────────── */
+.msg-label {
+    -fx-font-size: 13px;
+    -fx-min-height: 20px;
+}
+
+.msg-error {
+    -fx-text-fill: #EF4444;
+}
+
+.msg-success {
+    -fx-text-fill: #34D399;
+}
+
+.msg-warn {
+    -fx-text-fill: #FBBF24;
+}
+
+/* ── Indicateur de force du mot de passe ─────────────────────────── */
+.strength-label {
+    -fx-font-size: 12px;
+}
+
+.strength-weak {
+    -fx-text-fill: #EF4444;
+}
+
+.strength-medium {
+    -fx-text-fill: #FBBF24;
+}
+
+.strength-strong {
+    -fx-text-fill: #34D399;
+}
+
+/* ── Liens ───────────────────────────────────────────────────────── */
+.link-label {
+    -fx-text-fill: #9494AC;
+    -fx-font-size: 13px;
+}
+
+.link {
+    -fx-text-fill: #6366F1;
+    -fx-font-size: 13px;
+    -fx-border-color: transparent;
+}
+
+.link:hover {
+    -fx-text-fill: #818CF8;
+}
+
+/* ── Carte infos (profil) ────────────────────────────────────────── */
+.info-card {
+    -fx-background-color: #1C1C26;
+    -fx-border-color: #373750;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+.info-key {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #9494AC;
+    -fx-min-width: 80;
+}
+
+.info-value {
+    -fx-font-size: 13px;
+    -fx-text-fill: #F8F8FF;
+}
+
+.info-value-mono {
+    -fx-font-size: 12px;
+    -fx-font-family: "Monospaced";
+    -fx-text-fill: #6366F1;
+}
