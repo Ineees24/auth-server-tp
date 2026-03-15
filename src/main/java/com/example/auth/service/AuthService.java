@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-
+import java.time.LocalDateTime;
 /**
  * Service principal de gestion de l'authentification.
  * TP2 améliore le stockage mais ne protège pas encore contre le rejeu.
@@ -57,15 +57,49 @@ public class AuthService {
             throw new InvalidInputException("Email et mot de passe requis");
         }
 
-        boolean success = userRepository.findByEmail(email)
-                .map(user -> passwordEncoder.matches(password, user.getPassword()))
-                .orElse(false);
+        User user = userRepository.findByEmail(email).orElse(null);
+
+        // Email inconnu : on retourne false sans info supplémentaire
+        if (user == null) {
+            logger.warn("Connexion echouee: email inconnu {}", email);
+            return false;
+        }
+
+        // Vérifier si le compte est bloqué
+        if (user.getLockUntil() != null &&
+                user.getLockUntil().isAfter(LocalDateTime.now())) {
+            logger.warn("Connexion refusee: compte bloque pour {}", email);
+            throw new AccountLockedException(
+                    "Compte bloque. Reessayez dans 2 minutes.");
+        }
+
+        // Vérifier le mot de passe
+        boolean success = passwordEncoder.matches(password, user.getPassword());
 
         if (success) {
+            // Réinitialiser les compteurs en cas de succès
+            user.setFailedAttempts(0);
+            user.setLockUntil(null);
+            userRepository.save(user);
             logger.info("Connexion reussie pour : {}", email);
         } else {
-            logger.warn("Connexion echouee pour : {}", email);
+            // Incrémenter le compteur d'échecs
+            int attempts = user.getFailedAttempts() + 1;
+            user.setFailedAttempts(attempts);
+
+            if (attempts >= 5) {
+                // Bloquer le compte 2 minutes
+                user.setLockUntil(LocalDateTime.now().plusMinutes(2));
+                userRepository.save(user);
+                logger.warn("Compte bloque apres 5 echecs pour : {}", email);
+                throw new AccountLockedException(
+                        "Compte bloque apres 5 echecs. Reessayez dans 2 minutes.");
+            }
+
+            userRepository.save(user);
+            logger.warn("Connexion echouee ({}/5) pour : {}", attempts, email);
         }
+
         return success;
     }
 }

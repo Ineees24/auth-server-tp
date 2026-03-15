@@ -42,4 +42,16 @@ public class GlobalExceptionHandler {
                 "path", req.getRequestURI()
         ));
     }
+
+    @ExceptionHandler(AccountLockedException.class)
+    public ResponseEntity<?> handleLocked(AccountLockedException e,
+                                          HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of(
+                "timestamp", LocalDateTime.now().toString(),
+                "status", 429,
+                "error", "Too Many Requests",
+                "message", e.getMessage(),
+                "path", req.getRequestURI()
+        ));
+    }
 }
