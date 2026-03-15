@@ -29,10 +29,7 @@ public class AuthService {
             logger.warn("Inscription echouee: email invalide");
             throw new InvalidInputException("Email invalide");
         }
-        if (password == null || password.length() < 4) {
-            logger.warn("Inscription echouee: mot de passe trop court");
-            throw new InvalidInputException("Mot de passe trop court (min 4 caracteres)");
-        }
+        PasswordPolicyValidator.validate(password);
         if (userRepository.findByEmail(email).isPresent()) {
             logger.warn("Inscription echouee: email deja existant {}", email);
             throw new ResourceConflictException("Email deja utilise");
