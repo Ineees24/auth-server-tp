@@ -25,15 +25,17 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestParam String email,
-                                      @RequestParam String password) {
+    public ResponseEntity<Map<String, Object>> register(
+            @RequestParam String email,
+            @RequestParam String password) {
         authService.register(email, password);
         return ResponseEntity.ok(Map.of("message", "Inscription reussie"));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestParam String email,
-                                   @RequestParam String password) {
+    public ResponseEntity<Map<String, Object>> login(
+            @RequestParam String email,
+            @RequestParam String password) {
         boolean ok = authService.login(email, password);
         if (!ok) {
             throw new AuthenticationFailedException("Email ou mot de passe incorrect");
@@ -46,13 +48,14 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> me(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<Map<String, Object>> me(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             throw new AuthenticationFailedException("Token manquant");
         }
         String token = authHeader.substring(7);
         return tokenService.getEmailFromToken(token)
-                .map(email -> ResponseEntity.ok(Map.of("email", email)))
+                .map(email -> ResponseEntity.ok(Map.of("email", (Object) email)))
                 .orElseThrow(() -> new AuthenticationFailedException("Token invalide"));
     }
 }

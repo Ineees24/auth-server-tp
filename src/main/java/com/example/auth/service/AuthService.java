@@ -40,7 +40,7 @@ public class AuthService {
 
         // Vérifier unicité email
         if (userRepository.findByEmail(email).isPresent()) {
-            logger.warn("Inscription echouee: email deja existant {}", email);
+            logger.warn("Inscription echouee: email deja existant");
             throw new ResourceConflictException("Email deja utilise");
         }
 
@@ -48,7 +48,7 @@ public class AuthService {
         String hashedPassword = passwordEncoder.encode(password);
         User user = new User(email, hashedPassword);
         User saved = userRepository.save(user);
-        logger.info("Inscription reussie pour : {}", email);
+        logger.info("Inscription reussie");
         return saved;
     }
 
@@ -81,7 +81,7 @@ public class AuthService {
             user.setFailedAttempts(0);
             user.setLockUntil(null);
             userRepository.save(user);
-            logger.info("Connexion reussie pour : {}", email);
+            logger.info("Connexion reussie");
         } else {
             // Incrémenter le compteur d'échecs
             int attempts = user.getFailedAttempts() + 1;
