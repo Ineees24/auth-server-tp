@@ -1,15 +1,23 @@
 package com.example.auth.service;
 
+import com.example.auth.entity.AuthNonce;
+import com.example.auth.entity.SsoToken;
 import com.example.auth.entity.User;
 import com.example.auth.exception.*;
+import com.example.auth.repository.AuthNonceRepository;
 import com.example.auth.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.UUID;
+
 /**
  * Service principal de gestion de l'authentification.
+ * TP3 : protocole HMAC + nonce + timestamp. Le mot de passe ne circule plus.
  * TP2 améliore le stockage mais ne protège pas encore contre le rejeu.
  *
  * AVERTISSEMENT : Cette implémentation est volontairement dangereuse
@@ -18,33 +26,45 @@ import java.time.LocalDateTime;
 @Service
 public class AuthService {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
-    private final UserRepository userRepository;
+    private static final Logger logger =
+            LoggerFactory.getLogger(AuthService.class);
+
+    private static final int    TIMESTAMP_WINDOW = 60;   // ±60 secondes
+    private static final int    TOKEN_DURATION   = 15;   // 15 minutes
+    private static final long   NONCE_TTL        = 120;  // 2 minutes
+
+    private final UserRepository     userRepository;
+    private final AuthNonceRepository nonceRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final HmacService         hmacService;
+    private final TokenService        tokenService;
 
     public AuthService(UserRepository userRepository,
-                       BCryptPasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
+                       AuthNonceRepository nonceRepository,
+                       BCryptPasswordEncoder passwordEncoder,
+                       HmacService hmacService,
+                       TokenService tokenService) {
+        this.userRepository  = userRepository;
+        this.nonceRepository = nonceRepository;
         this.passwordEncoder = passwordEncoder;
+        this.hmacService     = hmacService;
+        this.tokenService    = tokenService;
     }
 
+    // ── Inscription ───────────────────────────────────────────────────────────
     public User register(String email, String password) {
-        // Validation email
         if (email == null || email.isBlank() || !email.contains("@")) {
             logger.warn("Inscription echouee: email invalide");
             throw new InvalidInputException("Email invalide");
         }
 
-        // Validation politique mot de passe
         PasswordPolicyValidator.validate(password);
 
-        // Vérifier unicité email
         if (userRepository.findByEmail(email).isPresent()) {
             logger.warn("Inscription echouee: email deja existant");
             throw new ResourceConflictException("Email deja utilise");
         }
 
-        // Hash du mot de passe avant stockage
         String hashedPassword = passwordEncoder.encode(password);
         User user = new User(email, hashedPassword);
         User saved = userRepository.save(user);
@@ -52,54 +72,77 @@ public class AuthService {
         return saved;
     }
 
-    public boolean login(String email, String password) {
-        if (email == null || password == null) {
-            throw new InvalidInputException("Email et mot de passe requis");
+    // ── Connexion HMAC ────────────────────────────────────────────────────────
+    /**
+     * Vérifie la preuve HMAC envoyée par le client.
+     * Ordre des vérifications obligatoire :
+     * 1. Email existe
+     * 2. Timestamp dans la fenêtre ±60s
+     * 3. Nonce non déjà utilisé
+     * 4. HMAC valide en temps constant
+     * 5. Émettre token SSO
+     */
+    public SsoToken login(String email, String nonce,
+                          long timestamp, String hmac) {
+        // 1. Vérifier email
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new AuthenticationFailedException("Authentification echouee"));
+
+        // 2. Vérifier timestamp ±60 secondes
+        long now = Instant.now().getEpochSecond();
+        if (Math.abs(now - timestamp) > TIMESTAMP_WINDOW) {
+            logger.warn("Login refuse: timestamp expire");
+            throw new AuthenticationFailedException("Authentification echouee");
         }
 
-        User user = userRepository.findByEmail(email).orElse(null);
+        // 3. Vérifier nonce anti-rejeu
+        nonceRepository.findByUserAndNonce(user, nonce).ifPresent(n -> {
+            logger.warn("Login refuse: nonce deja utilise");
+            throw new AuthenticationFailedException("Authentification echouee");
+        });
 
-        // Email inconnu : on retourne false sans info supplémentaire
-        if (user == null) {
-            logger.warn("Connexion echouee: email inconnu {}", email);
-            return false;
-        }
+        // 4. Enregistrer le nonce pour bloquer tout rejeu futur
+        AuthNonce authNonce = new AuthNonce(
+                user, nonce,
+                LocalDateTime.now().plusSeconds(NONCE_TTL)
+        );
+        nonceRepository.save(authNonce);
 
-        // Vérifier si le compte est bloqué
-        if (user.getLockUntil() != null &&
-                user.getLockUntil().isAfter(LocalDateTime.now())) {
-            logger.warn("Connexion refusee: compte bloque pour {}", email);
-            throw new AccountLockedException(
-                    "Compte bloque. Reessayez dans 2 minutes.");
-        }
+        // 5. Recalculer le HMAC attendu
+        try {
+            // Le mot de passe stocké en base est haché (BCrypt)
+            // On ne peut pas l'utiliser directement comme clé HMAC
+            // TP3 pédagogique : on utilise le hash BCrypt comme clé
+            String message      = email + ":" + nonce + ":" + timestamp;
+            String hmacExpected = hmacService.compute(
+                    user.getPassword(), message);
 
-        // Vérifier le mot de passe
-        boolean success = passwordEncoder.matches(password, user.getPassword());
-
-        if (success) {
-            // Réinitialiser les compteurs en cas de succès
-            user.setFailedAttempts(0);
-            user.setLockUntil(null);
-            userRepository.save(user);
-            logger.info("Connexion reussie");
-        } else {
-            // Incrémenter le compteur d'échecs
-            int attempts = user.getFailedAttempts() + 1;
-            user.setFailedAttempts(attempts);
-
-            if (attempts >= 5) {
-                // Bloquer le compte 2 minutes
-                user.setLockUntil(LocalDateTime.now().plusMinutes(2));
-                userRepository.save(user);
-                logger.warn("Compte bloque apres 5 echecs pour : {}", email);
-                throw new AccountLockedException(
-                        "Compte bloque apres 5 echecs. Reessayez dans 2 minutes.");
+            // 6. Comparer en temps constant
+            if (!hmacService.compareConstantTime(hmacExpected, hmac)) {
+                logger.warn("Login refuse: HMAC invalide");
+                throw new AuthenticationFailedException("Authentification echouee");
             }
 
-            userRepository.save(user);
-            logger.warn("Connexion echouee ({}/5) pour : {}", attempts, email);
+        } catch (AuthenticationFailedException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Erreur calcul HMAC");
+            throw new AuthenticationFailedException("Authentification echouee");
         }
 
-        return success;
+        // 7. Marquer nonce comme consommé
+        nonceRepository.findByUserAndNonce(user, nonce)
+                .ifPresent(n -> {
+                    n.setConsumed(true);
+                    nonceRepository.save(n);
+                });
+
+        // 8. Émettre token SSO
+        String accessToken = tokenService.generateToken(email);
+        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(TOKEN_DURATION);
+
+        logger.info("Connexion reussie");
+        return new SsoToken(accessToken, expiresAt);
     }
 }
