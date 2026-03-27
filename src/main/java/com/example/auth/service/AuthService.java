@@ -145,4 +145,18 @@ public class AuthService {
         logger.info("Connexion reussie");
         return new SsoToken(accessToken, expiresAt);
     }
+    /** Utilisé uniquement pour les tests — récupère un utilisateur par email */
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new AuthenticationFailedException("User not found"));
+    }
+
+    /** Valide un token — utilisé pour tester /api/me */
+    public String validateToken(String token) {
+        if (token == null) {
+            throw new AuthenticationFailedException("Token manquant");
+        }
+        return tokenService.getEmailFromToken(token)
+                .orElseThrow(() -> new AuthenticationFailedException("Token invalide"));
+    }
 }
