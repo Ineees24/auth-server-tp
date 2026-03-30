@@ -211,4 +211,105 @@ class AuthServiceTest {
         assertThrows(AuthenticationFailedException.class, () ->
                 authService.validateToken(null));
     }
+
+    // Test 16 : HMAC différent pour messages différents
+    @Test
+    void testHmacDifferentPourMessagesDifferents() throws Exception {
+        String key  = "motdepasse";
+        String msg1 = "user@test.com:nonce1:123456";
+        String msg2 = "user@test.com:nonce2:123456";
+
+        String hmac1 = hmacService.compute(key, msg1);
+        String hmac2 = hmacService.compute(key, msg2);
+
+        assertNotEquals(hmac1, hmac2);
+    }
+
+    // Test 17 : PasswordPolicyValidator — pas de majuscule
+    @Test
+    void testPasswordSansMajuscule() {
+        assertThrows(InvalidInputException.class, () ->
+                authService.register("a@b.com", "abcdef123!@#"));
+    }
+
+    // Test 18 : PasswordPolicyValidator — pas de chiffre
+    @Test
+    void testPasswordSansChiffre() {
+        assertThrows(InvalidInputException.class, () ->
+                authService.register("a@b.com", "Abcdefghij!@"));
+    }
+
+    // Test 19 : PasswordPolicyValidator — pas de caractère spécial
+    @Test
+    void testPasswordSansSpecial() {
+        assertThrows(InvalidInputException.class, () ->
+                authService.register("a@b.com", "Abcdefgh1234"));
+    }
+
+    // Test 20 : TokenService — token invalide
+    @Test
+    void testTokenInvalide() {
+        assertThrows(AuthenticationFailedException.class, () ->
+                authService.validateToken("token_inexistant"));
+    }
+
+    // Test 21 : validateToken OK
+    @Test
+    void testValidateTokenOK() throws Exception {
+        registerUser();
+        var user = authService.findByEmail(VALID_EMAIL);
+        String nonce     = UUID.randomUUID().toString();
+        long   timestamp = Instant.now().getEpochSecond();
+        String message   = VALID_EMAIL + ":" + nonce + ":" + timestamp;
+        String hmac      = hmacService.compute(user.getPassword(), message);
+
+        SsoToken token = authService.login(VALID_EMAIL, nonce, timestamp, hmac);
+        String email = authService.validateToken(token.getAccessToken());
+        assertEquals(VALID_EMAIL, email);
+    }
+    // Test 23 : GlobalExceptionHandler — InvalidInputException retourne 400
+    @Test
+    void testRegisterEmailNull() {
+        assertThrows(InvalidInputException.class, () ->
+                authService.register(null, VALID_PASSWORD));
+    }
+
+    // Test 24 : GlobalExceptionHandler — ResourceConflictException retourne 409
+    @Test
+    void testRegisterConflitEmail() {
+        authService.register(VALID_EMAIL, VALID_PASSWORD);
+        assertThrows(ResourceConflictException.class, () ->
+                authService.register(VALID_EMAIL, VALID_PASSWORD));
+    }
+
+    // Test 25 : PasswordPolicyValidator — pas de minuscule
+    @Test
+    void testPasswordSansMinuscule() {
+        assertThrows(InvalidInputException.class, () ->
+                authService.register("a@b.com", "ABCDEF123!@#"));
+    }
+
+    // Test 26 : PasswordPolicyValidator — exactement 12 caractères OK
+    @Test
+    void testPasswordExactement12Caracteres() {
+        assertDoesNotThrow(() ->
+                authService.register("new2@test.com", "Abcdefg123!@"));
+    }
+
+    // Test 27 : findByEmail email inconnu
+    @Test
+    void testFindByEmailInconnu() {
+        assertThrows(AuthenticationFailedException.class, () ->
+                authService.findByEmail("inconnu@test.com"));
+    }
+
+    // Test 28 : HMAC même clé même message = même résultat
+    @Test
+    void testHmacDeterministe() throws Exception {
+        String key  = "cle_secrete";
+        String msg  = "email:nonce:123";
+        String h1   = hmacService.compute(key, msg);
+        String h2   = hmacService.compute(key, msg);
+        assertEquals(h1, h2);
+    }
 }
