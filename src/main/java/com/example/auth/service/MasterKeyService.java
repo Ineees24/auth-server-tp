@@ -34,12 +34,17 @@ public class MasterKeyService {
     @PostConstruct
     public void init() {
         String rawKey = System.getenv("APP_MASTER_KEY");
+
+        // Fallback sur propriété Spring pour les tests
+        if (rawKey == null || rawKey.isBlank()) {
+            rawKey = System.getProperty("APP_MASTER_KEY");
+        }
+
         if (rawKey == null || rawKey.isBlank()) {
             throw new IllegalStateException(
                     "APP_MASTER_KEY est absente. L'application ne peut pas démarrer.");
         }
 
-        // Dériver une clé AES 256 bits depuis la variable d'environnement
         byte[] keyBytes = deriveKey(rawKey);
         this.secretKey  = new SecretKeySpec(keyBytes, "AES");
     }
