@@ -7,6 +7,7 @@ import com.example.auth.service.AuthService;
 import com.example.auth.service.TokenService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.example.auth.entity.ChangePasswordRequest;
 
 import java.util.Map;
 
@@ -73,5 +74,31 @@ public class AuthController {
                         Map.of("email", (Object) email)))
                 .orElseThrow(() ->
                         new AuthenticationFailedException("Token invalide"));
+    }
+    @PutMapping("/change-password")
+    public ResponseEntity<Map<String, Object>> changePassword(
+            @RequestBody ChangePasswordRequest request,
+            @RequestHeader(value = "Authorization", required = false)
+            String authHeader) {
+
+        // Vérifier que l'utilisateur est authentifié
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new AuthenticationFailedException("Token manquant");
+        }
+        String token = authHeader.substring(7);
+        tokenService.getEmailFromToken(token)
+                .orElseThrow(() ->
+                        new AuthenticationFailedException("Token invalide"));
+
+        authService.changePassword(
+                request.getEmail(),
+                request.getOldPassword(),
+                request.getNewPassword(),
+                request.getConfirmPassword()
+        );
+
+        return ResponseEntity.ok(Map.of(
+                MESSAGE, "Mot de passe change avec succes"
+        ));
     }
 }

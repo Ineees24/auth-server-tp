@@ -177,4 +177,58 @@ public class AuthService {
                 .orElseThrow(() ->
                         new AuthenticationFailedException("Token invalide"));
     }
+    /**
+     * Change le mot de passe d'un utilisateur authentifié.
+     * TP5 : vérifie l'ancien mot de passe, la confirmation et la politique.
+     *
+     * Étapes :
+     * 1. Vérifier que l'utilisateur existe
+     * 2. Vérifier que l'ancien mot de passe est correct
+     * 3. Vérifier que newPassword = confirmPassword
+     * 4. Vérifier la politique du nouveau mot de passe
+     * 5. Chiffrer et stocker le nouveau mot de passe
+     */
+    public void changePassword(String email, String oldPassword,
+                               String newPassword, String confirmPassword) {
+
+        // 1. Vérifier que l'utilisateur existe
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new AuthenticationFailedException("Utilisateur introuvable"));
+
+        // 2. Vérifier l'ancien mot de passe
+        try {
+            String storedDecrypted = masterKeyService.decrypt(user.getPassword());
+            if (!passwordEncoder.matches(oldPassword, storedDecrypted)) {
+                logger.warn("Changement mot de passe refuse: ancien mot de passe incorrect");
+                throw new AuthenticationFailedException("Ancien mot de passe incorrect");
+            }
+        } catch (AuthenticationFailedException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Erreur dechiffrement lors du changement de mot de passe");
+            throw new AuthenticationFailedException("Erreur lors de la verification");
+        }
+
+        // 3. Vérifier que newPassword = confirmPassword
+        if (!newPassword.equals(confirmPassword)) {
+            throw new InvalidInputException(
+                    "Le nouveau mot de passe et la confirmation ne correspondent pas");
+        }
+
+        // 4. Vérifier la politique du nouveau mot de passe
+        PasswordPolicyValidator.validate(newPassword);
+
+        // 5. Chiffrer et stocker le nouveau mot de passe
+        try {
+            String newBcrypt    = passwordEncoder.encode(newPassword);
+            String newEncrypted = masterKeyService.encrypt(newBcrypt);
+            user.setPassword(newEncrypted);
+            userRepository.save(user);
+            logger.info("Mot de passe change avec succes");
+        } catch (Exception e) {
+            logger.error("Erreur chiffrement nouveau mot de passe");
+            throw new InvalidInputException("Erreur lors du changement de mot de passe");
+        }
+    }
 }
