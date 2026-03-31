@@ -1,6 +1,7 @@
 package com.example.auth.service;
 
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Cipher;
@@ -21,23 +22,33 @@ import java.util.Base64;
 @Service
 public class MasterKeyService {
 
-    private static final String ALGORITHM  = "AES/GCM/NoPadding";
-    private static final int    GCM_IV_LEN = 12;  // 96 bits
+    private static final String ALGORITHM   = "AES/GCM/NoPadding";
+    private static final int    GCM_IV_LEN  = 12;  // 96 bits
     private static final int    GCM_TAG_LEN = 128; // 128 bits
+
+    @Value("${app.master.key:#{null}}")
+    private String springKey;
 
     private SecretKey secretKey;
 
     /**
      * Vérifie et charge la Master Key au démarrage.
-     * L'application refuse de démarrer si APP_MASTER_KEY est absente.
+     * Ordre de priorité :
+     * 1. Variable d'environnement APP_MASTER_KEY
+     * 2. Propriété système -DAPP_MASTER_KEY
+     * 3. Propriété Spring app.master.key (pour les tests)
+     * L'application refuse de démarrer si aucune clé n'est trouvée.
      */
     @PostConstruct
     public void init() {
         String rawKey = System.getenv("APP_MASTER_KEY");
 
-        // Fallback sur propriété Spring pour les tests
         if (rawKey == null || rawKey.isBlank()) {
             rawKey = System.getProperty("APP_MASTER_KEY");
+        }
+
+        if (rawKey == null || rawKey.isBlank()) {
+            rawKey = springKey;
         }
 
         if (rawKey == null || rawKey.isBlank()) {
@@ -56,7 +67,6 @@ public class MasterKeyService {
      * @return la chaîne chiffrée
      */
     public String encrypt(String plaintext) throws Exception {
-        // Générer un IV aléatoire — jamais fixe !
         byte[] iv = new byte[GCM_IV_LEN];
         new SecureRandom().nextBytes(iv);
 
@@ -94,8 +104,7 @@ public class MasterKeyService {
     }
 
     /**
-     * Dérive une clé AES 256 bits (32 bytes) depuis une chaîne.
-     * Padding ou truncation pour obtenir exactement 32 bytes.
+     * Dérive une clé AES 256 bits depuis une chaîne.
      */
     private byte[] deriveKey(String rawKey) {
         byte[] raw    = rawKey.getBytes();

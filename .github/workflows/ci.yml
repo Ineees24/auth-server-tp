@@ -25,14 +25,14 @@ jobs:
 
       # 3. Master Key fictive pour les tests CI
       - name: Set test Master Key
-        run: echo "APP_MASTER_KEY=test_master_key_for_ci_only" >> $GITHUB_ENV
-
+        run: echo "APP_MASTER_KEY=test_master_key_for_tests_only" >> $GITHUB_ENV
 
       # 4. Build + Tests
       - name: Build and run tests
-        run: mvn clean verify "-DAPP_MASTER_KEY=test_master_key_for_ci_only"
+        run: mvn clean verify "-DAPP_MASTER_KEY=test_master_key_for_tests_only"
         env:
-          APP_MASTER_KEY: test_master_key_for_ci_only
+          APP_MASTER_KEY: test_master_key_for_tests_only
+
       # 5. Analyse SonarCloud
       - name: SonarCloud Scan
         env:
